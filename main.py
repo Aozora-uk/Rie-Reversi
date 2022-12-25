@@ -82,9 +82,9 @@ async def newgame(data):
   if note.get('mentions'):
     if MY_ID in note['mentions']:
       text = note['text']
-      lev = re.search(r"(level|レベル|難易度|難しさ) (\d+)", text)
+      lev = re.search(r"(level) (\d+)", text)
       try:
-        lev = str(lev).split("match='l ")[1].split("'>")[0]
+        lev = str(lev).split("match='level ")[1].split("'>")[0]
       except :
         lev = _level
       if (re.search(r'先|first|First', text)):
