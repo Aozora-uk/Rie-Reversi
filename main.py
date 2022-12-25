@@ -63,7 +63,7 @@ async def runner():
         a = data["body"]["body"]["reply"]["text"]
         if (data["body"]["body"]["user"]["id"] in a and not ("finished" in a)):
           await play(data)
-        elif ("gpt" in a) :
+        elif ("AiReversi" in a) :
           msk.notes_create(text="ここには返信できませんよ！", reply_id=data["body"]["body"]['id'])
       except KeyError:
         if (data['body']['type'] == 'mention'):
@@ -82,14 +82,10 @@ async def newgame(data):
   if note.get('mentions'):
     if MY_ID in note['mentions']:
       text = note['text']
-      #lev = re.search(r"(level|レベル|難易度|難しさ) (\d+)", text)
+      lev = re.search(r"(level|レベル|難易度|難しさ) (\d+)", text)
       try:
         lev = str(lev).split("match='l ")[1].split("'>")[0]
-        
       except :
-      #if (re.search(r"(level|lev|l|レベル|難易度|難しさ) (\d+)", text)):
-        #lev = str(re.search(r"(level|lev|l|レベル|難易度|難しさ) (\d+)", text))
-      #else :
         lev = _level
       if (re.search(r'先|first|First', text)):
         ai_first = "no"
@@ -121,12 +117,7 @@ def aiprocessor(aianswer):
     reply += disks[i]
     if (disknum % 8 == 0 and disknum != 64):
       reply += "</small>\\(\\\\[0.05em]\\kern{3.85em}\\)<small>"
-    #elif (disknum % 4 == 0 and disknum != 64):
-    #  reply += ""
-    #elif (disknum % 2 == 0 and disknum != 64) :
-    #  reply += ""
   reply += "</small>\("
-  #reply = reply[:-1]
   reply = reply.replace('O',":_Wh:")
   reply = reply.replace('X',":_Bl:")
   reply = reply.replace('#',":blank:")
@@ -160,7 +151,6 @@ async def play(data):
   startdate = replytext.split(",start=")[1]
   startdate = startdate.split(mfmfooter)[0]
   if (re.search(r'やめる|投了|リタイ|終|おわり|止|あきらめ|諦|Stop|STOP|stop', text)):
-  #if ("やめる" in s or "投了" in s or "リタイア" in s or "終了" in s or "おわり" in s or "止" in s or "あきらめる" in s or "諦める" in s or "STOP" in s or "Stop" in s or "stop" in s):
     await talk(data["body"]["body"]["id"],"owari")
     return(0)
   elif (re.search(r'パス|ﾊﾟｽ|Pass|pass|PASS|飛', text)):
