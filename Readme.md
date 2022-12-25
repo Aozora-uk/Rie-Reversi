@@ -11,6 +11,7 @@ Reversi bot for Misskey v12 &amp; v13
 依存 : python3, pip
 ```
 $ git clone https://github.com/dvorak-lya/reversi-ai
+$ git submodule init
 $ git submodule update
 
 // main.py のインスタンス名とトークンを書き換える
