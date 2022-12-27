@@ -42,7 +42,7 @@ cwd = os.getcwd()
 MY_ID = msk.i()["id"]
 WS_URL = "wss://" + instance + "/streaming?i=" + TOKEN
 myuuid = str(uuid.uuid4())
-_level = "21"    #難易度0〜60 あまり上げすぎると止まる
+_level = "8"    #難易度0〜60 あまり上げすぎると止まる
 mfmheader = "\n\n$[x3 $[x3 :_BOARD:]]\n\\(\\\\[-16.88em]\\kern{3.85em}\)<small>"
 mfmfooter = "}\\\\[-20em]\\kern{-2em}\\)$[x3 $[x3 :blank:]]\\(\\\\[0em]\\kern{13em}\\)$[font.fantasy AiReversi alpha 1]"
 
