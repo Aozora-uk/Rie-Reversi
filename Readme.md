@@ -8,13 +8,17 @@ Reversi bot for Misskey v12 &amp; v13
 
 ## インストール方法メモ
 
-依存 : python3, pip
+依存 : python3, pip, g++
 ```
 $ git clone https://github.com/dvorak-lya/Ai-Reversi.git
 $ cd Ai-Reversi
 $ git clone https://github.com/Nyanyan/Egaroucid.git
 
-// main.py のインスタンス名とトークンを書き換える
+```
+
+ここで main.py のインスタンス名とトークンを書き換える（いつか設定ファイルに分ける予定）
+
+```
 
 $ cd Egaroucid/src
 
@@ -22,7 +26,7 @@ $ cd Egaroucid/src
 $ g++ -O2 Egaroucid_console.cpp -o Egaroucid_for_Console.out -mtune=native -march=native -pthread -std=c++17 -Wall -Wextra -DHAS_ARM_PROCESSOR -DHAS_NO_AVX2
 
 //X64の場合
-$ $ g++ -O2 Egaroucid_console.cpp -o Egaroucid_for_Console.out -mtune=native -march=native -pthread -std=c++17 -Wall -Wextra
+$ g++ -O2 Egaroucid_console.cpp -o Egaroucid_for_Console.out -mtune=native -march=native -pthread -std=c++17 -Wall -Wextra
 
 $ cd ../../
 $ pip install Misskey.py websockets
