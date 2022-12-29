@@ -22,7 +22,7 @@
 #
 
 #!/usr/bin/bash
-timeout 30s ./Egaroucid/src/garoucid_for_Console.out -l $1 << EOT
+timeout 30s ./Egaroucid/src/Egaroucid_for_Console.out -l $1 << EOT
 $2
 $3
 $4
