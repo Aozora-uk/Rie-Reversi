@@ -33,24 +33,21 @@ import uuid
 from subprocess import PIPE
 from misskey import Misskey
 
-configFile = open('qitta_json.json', 'r')
-
-TOKEN = "INPUT YOUR TOKEN HERE"    # トークンを入力
-instance = "misskey.example.com"    #ドメインを入力
-
-
-misskeyObject = Misskey(instance, i=TOKEN)
-cwd = os.getcwd()
-_userId = misskeyObject.i()["id"]
-WS_URL = "wss://" + instance + "/streaming?i=" + TOKEN
+_config = json.load(open('config.json', 'r'))
+_cwd = os.getcwd()
+_instance = _config["domain"]
+_defaultLevel = int(_config["defaultlevel"])
+_maxLevel = int(_config["maxlevel"])
+misskeyObject = Misskey(_instance, i=_config["token"])
+_aiId = misskeyObject.i()["id"]
 _uuid = str(uuid.uuid4())
-_defaultLevel = "5"    #難易度0〜60 あまり上げすぎると止まる,上げるほどバグ多くなる
 _mfmHeader = "\n\n$[x3 $[x3 :_BOARD:]]\n\\(\\\\[-16.88em]\\kern{3.85em}\)<small>"
-_mfmFooter = "}\\\\[-20em]\\kern{-2em}\\)$[x3 $[x3 :blank:]]\\(\\\\[0em]\\kern{13em}\\)$[font.fantasy AiReversi alpha 1]"
+_mfmFooter = "}\\\\[-19em]\\kern{-1em}\\)$[x3 $[x3 :blank:]]\\(\\\\[0em]\\kern{13em}\\)$[font.fantasy AiReversi alpha 1]"
+
 
 
 async def runner():
- async with websockets.connect(WS_URL) as ws:
+ async with websockets.connect("wss://" + _instance + "/streaming?i=" + _config["token"]) as ws:
   await ws.send(json.dumps({
    "type": "connect",
    "body": {
@@ -61,44 +58,48 @@ async def runner():
   while True:
     data = json.loads(await ws.recv())
     if (data['type'] == 'channel' and data['body']['type'] == 'mention'):
+      print(data)
       try:
         a = data["body"]["body"]["reply"]["text"]
-        if (data["body"]["body"]["user"]["id"] in a and not ("finished" in a)):
+        b = data["body"]["body"]["reply"]["userId"]
+        c = data["body"]["body"]["user"]["id"]
+        if (c in a and _aiId in b and not ("finished" in a)):
           await play(data)
         elif ("AiReversi" in a) :
           misskeyObject.notes_create(text="ここには返信できませんよ！", reply_id=data["body"]["body"]['id'])
+        elif (re.search(r'リバーシ|オセロ|Reversi|Othello|reversi|othello', data["body"]["body"]["text"])):
+          await newgame(data)
       except KeyError:
         if (data['body']['type'] == 'mention'):
           if (re.search(r'リバーシ|オセロ|Reversi|Othello|reversi|othello', data["body"]["body"]["text"])):
             await newgame(data)
 
 
+
 async def talk(replyid,status):
-  #print("stdtalk!")
   if (status == "owari"):
     misskeyObject.notes_create(text="わかりました。", reply_id=replyid)
 
 
+
 async def newgame(data):
-  note = data['body']['body']
-  if note.get('mentions'):
-    if _userId in note['mentions']:
+      note = data['body']['body']
       text = note['text']
-      lev = re.search(r"(level) (\d+)", text)
       try:
-        lev = str(lev).split("match='level ")[1].split("'>")[0]
+        lev = str(re.search(r"(level) (\d+)", text)).split("match='level ")[1].split("'>")[0]
+      #try:
+        if (int(lev) > _maxLevel):
+          lev = str(_maxLevel)
       except :
-        lev = _defaultLevel
+        lev = str(_defaultLevel)
       if (re.search(r'先|first|First', text)):
         ai_first = "no"
-        aianswer = subprocess.run(['bash', cwd+'/ai.sh', lev, "", "", ""], stdout=PIPE, text=True)
+        aianswer = subprocess.run(['bash', _cwd+'/ai.sh', lev, "", "", ""], stdout=PIPE, text=True)
       else :
         ai_first = "yes"
-        aianswer=subprocess.run(['bash', cwd+'/ai.sh', lev, "new", "go", ""], stdout=PIPE, text=True)
+        aianswer=subprocess.run(['bash', _cwd+'/ai.sh', lev, "new", "go", ""], stdout=PIPE, text=True)
 
       reply = aiprocessor(aianswer)
-    
-
       reply = "良いですよ～"+_mfmHeader+reply+"\\phantom{level="+lev+",user="+note["user"]["id"]+",ai_first="+ai_first+",start="+(datetime.datetime.now().strftime("%Y:%m:%d:%T"))+_mfmFooter
       misskeyObject.notes_create(text=reply, reply_id=note['id'])
 
@@ -144,8 +145,6 @@ async def play(data):
       bords += "O"
     elif (l == "#"):
       bords += "-"
-  print(len(bords))
-  print(bords)
   lev = replytext.split("level=")[1]
   lev = lev.split(",user=")[0]
   ai_first = replytext.split(",ai_first=")[1]
@@ -160,14 +159,14 @@ async def play(data):
       bords += "X"
     else :
       bords += "O"
-    aianswer = subprocess.run(['bash', cwd+'/ai.sh', lev, "setboard "+bords, "go", ""], stdout=PIPE, stderr=PIPE, text=True)
+    aianswer = subprocess.run(['bash', _cwd+'/ai.sh', lev, "setboard "+bords, "go", ""], stdout=PIPE, stderr=PIPE, text=True)
     phrase = "パスですか?わかりました。"
   else :
     if (ai_first == "yes"):
       bords += "O"
     else :
       bords += "X"
-    text = text.replace("@ai@"+instance,"")
+    text = text.replace("@ai@"+_instance,"")
     text = text.replace("@ai","")
     playtext = ""
     for i in text:
@@ -179,10 +178,10 @@ async def play(data):
         playtext += j
         break
     if (len(playtext)!=2):
-      aianswer = subprocess.run(['bash', cwd+'/ai.sh', lev, "setboard "+bords, "", ""], stdout=PIPE, stderr=PIPE, text=True)
+      aianswer = subprocess.run(['bash', _cwd+'/ai.sh', lev, "setboard "+bords, "", ""], stdout=PIPE, stderr=PIPE, text=True)
       phrase = "`A2` みたいなかんじで場所を教えてください\nパスといえばパスできますよ♪"
     else :
-      aianswer = subprocess.run(['bash', cwd+'/ai.sh', lev, "setboard "+bords, "play "+playtext, "go"], stdout=PIPE, stderr=PIPE, text=True)
+      aianswer = subprocess.run(['bash', _cwd+'/ai.sh', lev, "setboard "+bords, "play "+playtext, "go"], stdout=PIPE, stderr=PIPE, text=True)
       phrase = "どうぞ!"
   aianswer_out = aiprocessor(aianswer)
   if (not "ERROR" in aianswer.stderr):

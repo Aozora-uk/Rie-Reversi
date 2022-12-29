@@ -16,10 +16,20 @@ $ git clone https://github.com/Nyanyan/Egaroucid.git
 
 ```
 
-ここで main.py のインスタンス名とトークンを書き換える（いつか設定ファイルに分ける予定）
+ここで次のような config.json を作成する
 
 ```
+{
+	"domain": "あなたのインスタンスuriを入力 (https://と最後の/なし)",
+	"token": "アクセストークンを入力",
+	"maxlevel": "レベルのMAX値。0〜60の範囲。あまり上げ過ぎると負荷、時間、安定性に悪影響",
+	"defaultlevel": "レベルを指定しなかったときの値。0〜60の範囲。ほどほどに"
+}
+```
 
+Engaroucidをビルド
+
+```
 $ cd Egaroucid/src
 
 // ARMの場合(Raspberry Pi)
@@ -29,7 +39,17 @@ $ g++ -O2 Egaroucid_console.cpp -o Egaroucid_for_Console.out -mtune=native -marc
 $ g++ -O2 Egaroucid_console.cpp -o Egaroucid_for_Console.out -mtune=native -march=native -pthread -std=c++17 -Wall -Wextra
 
 $ cd ../../
+```
+
+Pythonの依存パッケージをインストール
+
+```
 $ pip install Misskey.py websockets
+```
+
+起動！
+
+```
 $ python3 main.py
 ```
 
