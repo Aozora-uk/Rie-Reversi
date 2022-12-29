@@ -8,7 +8,12 @@ Reversi bot for Misskey v12 &amp; v13
 
 ## インストール方法メモ
 
+Linuxサーバー向けです
+
+事前にインスタンスにAssetsにある画像を絵文字としてをインポートしてください
+
 依存 : python3, pip, g++
+
 ```
 $ git clone https://github.com/dvorak-lya/Ai-Reversi.git
 $ cd Ai-Reversi
