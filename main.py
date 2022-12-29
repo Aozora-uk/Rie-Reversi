@@ -33,18 +33,20 @@ import uuid
 from subprocess import PIPE
 from misskey import Misskey
 
+configFile = open('qitta_json.json', 'r')
+
 TOKEN = "INPUT YOUR TOKEN HERE"    # トークンを入力
 instance = "misskey.example.com"    #ドメインを入力
 
 
-msk = Misskey(instance, i=TOKEN)
+misskeyObject = Misskey(instance, i=TOKEN)
 cwd = os.getcwd()
-MY_ID = msk.i()["id"]
+_userId = misskeyObject.i()["id"]
 WS_URL = "wss://" + instance + "/streaming?i=" + TOKEN
-myuuid = str(uuid.uuid4())
-_level = "8"    #難易度0〜60 あまり上げすぎると止まる
-mfmheader = "\n\n$[x3 $[x3 :_BOARD:]]\n\\(\\\\[-16.88em]\\kern{3.85em}\)<small>"
-mfmfooter = "}\\\\[-20em]\\kern{-2em}\\)$[x3 $[x3 :blank:]]\\(\\\\[0em]\\kern{13em}\\)$[font.fantasy AiReversi alpha 1]"
+_uuid = str(uuid.uuid4())
+_defaultLevel = "5"    #難易度0〜60 あまり上げすぎると止まる,上げるほどバグ多くなる
+_mfmHeader = "\n\n$[x3 $[x3 :_BOARD:]]\n\\(\\\\[-16.88em]\\kern{3.85em}\)<small>"
+_mfmFooter = "}\\\\[-20em]\\kern{-2em}\\)$[x3 $[x3 :blank:]]\\(\\\\[0em]\\kern{13em}\\)$[font.fantasy AiReversi alpha 1]"
 
 
 async def runner():
@@ -53,7 +55,7 @@ async def runner():
    "type": "connect",
    "body": {
      "channel": "main",
-     "id": myuuid
+     "id": _uuid
    }
   }))
   while True:
@@ -64,7 +66,7 @@ async def runner():
         if (data["body"]["body"]["user"]["id"] in a and not ("finished" in a)):
           await play(data)
         elif ("AiReversi" in a) :
-          msk.notes_create(text="ここには返信できませんよ！", reply_id=data["body"]["body"]['id'])
+          misskeyObject.notes_create(text="ここには返信できませんよ！", reply_id=data["body"]["body"]['id'])
       except KeyError:
         if (data['body']['type'] == 'mention'):
           if (re.search(r'リバーシ|オセロ|Reversi|Othello|reversi|othello', data["body"]["body"]["text"])):
@@ -74,19 +76,19 @@ async def runner():
 async def talk(replyid,status):
   #print("stdtalk!")
   if (status == "owari"):
-    msk.notes_create(text="わかりました。", reply_id=replyid)
+    misskeyObject.notes_create(text="わかりました。", reply_id=replyid)
 
 
 async def newgame(data):
   note = data['body']['body']
   if note.get('mentions'):
-    if MY_ID in note['mentions']:
+    if _userId in note['mentions']:
       text = note['text']
       lev = re.search(r"(level) (\d+)", text)
       try:
         lev = str(lev).split("match='level ")[1].split("'>")[0]
       except :
-        lev = _level
+        lev = _defaultLevel
       if (re.search(r'先|first|First', text)):
         ai_first = "no"
         aianswer = subprocess.run(['bash', cwd+'/ai.sh', lev, "", "", ""], stdout=PIPE, text=True)
@@ -97,8 +99,8 @@ async def newgame(data):
       reply = aiprocessor(aianswer)
     
 
-      reply = "良いですよ～"+mfmheader+reply+"\\phantom{level="+lev+",user="+note["user"]["id"]+",ai_first="+ai_first+",start="+(datetime.datetime.now().strftime("%Y:%m:%d:%T"))+mfmfooter
-      msk.notes_create(text=reply, reply_id=note['id'])
+      reply = "良いですよ～"+_mfmHeader+reply+"\\phantom{level="+lev+",user="+note["user"]["id"]+",ai_first="+ai_first+",start="+(datetime.datetime.now().strftime("%Y:%m:%d:%T"))+_mfmFooter
+      misskeyObject.notes_create(text=reply, reply_id=note['id'])
 
 
 
@@ -149,7 +151,7 @@ async def play(data):
   ai_first = replytext.split(",ai_first=")[1]
   ai_first = ai_first.split(",start=")[0]
   startdate = replytext.split(",start=")[1]
-  startdate = startdate.split(mfmfooter)[0]
+  startdate = startdate.split(_mfmFooter)[0]
   if (re.search(r'やめる|投了|リタイ|終|おわり|止|あきらめ|諦|Stop|STOP|stop', text)):
     await talk(data["body"]["body"]["id"],"owari")
     return(0)
@@ -184,7 +186,7 @@ async def play(data):
       phrase = "どうぞ!"
   aianswer_out = aiprocessor(aianswer)
   if (not "ERROR" in aianswer.stderr):
-    reply = phrase+mfmheader+aianswer_out+"\\phantom{level="+lev+",user="+note["user"]["id"]+",ai_first="+ai_first+",start="+startdate+mfmfooter
+    reply = phrase+_mfmHeader+aianswer_out+"\\phantom{level="+lev+",user="+note["user"]["id"]+",ai_first="+ai_first+",start="+startdate+_mfmFooter
   elif ("game over" in aianswer.stderr):
     blackdisc = aianswer_out.count("\\):_Bl:\\( ")
     whitedisc = aianswer_out.count("\\):_Wh:\\( ")
@@ -194,12 +196,12 @@ async def play(data):
       phrase = "負けちゃいました..."
     else :
       phrase = "藍の勝ちです！"
-    reply = str(blackdisc)+"対"+str(whitedisc)+"で"+phrase+mfmheader+aianswer_out+"\\phantom{finished,level="+lev+",user="+note["user"]["id"]+",ai_first="+ai_first+",start="+startdate+mfmfooter
+    reply = str(blackdisc)+"対"+str(whitedisc)+"で"+phrase+_mfmHeader+aianswer_out+"\\phantom{finished,level="+lev+",user="+note["user"]["id"]+",ai_first="+ai_first+",start="+startdate+_mfmFooter
   elif ("invalid move" in aianswer.stderr):
     reply = "そこには置けないみたいです:woozy_ai:\n\n"+data["body"]["body"]["reply"]["text"].split("\n\n")[1]
   else :
       reply = "エラーです！コード:"+aianswer.stderr
-  msk.notes_create(text=reply, reply_id=note['id'])
+  misskeyObject.notes_create(text=reply, reply_id=note['id'])
 
 asyncio.get_event_loop().run_until_complete(runner())
 
