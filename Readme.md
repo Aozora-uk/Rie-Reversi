@@ -10,7 +10,7 @@ Reversi bot for Misskey v12 &amp; v13
 
 Linuxサーバー向けです
 
-事前にインスタンスにAssetsにある画像を絵文字としてをインポートしてください
+MisskeyインスタンスにAssetsに内の画像をカスタム絵文字としてインポートしてください
 
 依存 : python3, pip, g++
 
@@ -18,7 +18,6 @@ Linuxサーバー向けです
 $ git clone https://github.com/dvorak-lya/Ai-Reversi.git
 $ cd Ai-Reversi
 $ git clone https://github.com/Nyanyan/Egaroucid.git
-
 ```
 
 ここで次のような config.json を作成する
