@@ -1,4 +1,0 @@
-{
-	"domain": "misskey.example.com", // サーバーのドメインを入力(https,スラッシュなし)
-	"token": "INPUT YOUR TOKEN HERE" // アクセストークンを入力
-}
